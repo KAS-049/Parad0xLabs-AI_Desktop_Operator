@@ -1,6 +1,7 @@
 node_modules/
 downloads/
 dist/
+.codex-avatar-data/
 
 .DS_Store
 Thumbs.db
@@ -10,8 +11,8 @@ Thumbs.db
 
 .env
 .env.*
+!.env.example
 
 coverage/
 .cache/
 out/
-
