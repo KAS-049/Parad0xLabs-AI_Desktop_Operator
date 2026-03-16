@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Codex Avatar</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="shell" class="shell compact">
+        <div class="chrome-overlay">
+          <div class="topbar drag-handle">
+            <div class="toolbar-left">
+              <button id="settingsToggle" class="icon-button no-drag" title="Settings">+</button>
+              <div class="toolbar-title">Codex Avatar</div>
+            </div>
+            <div class="toolbar-right">
+              <button id="collapseButton" class="window-button no-drag hidden" title="Collapse">-</button>
+              <button id="minimizeButton" class="window-button no-drag" title="Minimize">_</button>
+              <button id="closeButton" class="window-button close no-drag" title="Close">X</button>
+            </div>
+          </div>
+          <div id="stateBadge" class="state idle no-drag">Idle</div>
+        </div>
+
+        <button id="avatarStage" class="avatar-stage no-drag" title="Open Console">
+          <div id="avatarMount" class="avatar-mount"></div>
+          <div class="avatar-glow"></div>
+          <div class="avatar-hint">
+            <div class="avatar-name">Codex Avatar</div>
+            <div class="avatar-prompt">Click to open command console</div>
+          </div>
+          <div id="avatarStatus" class="avatar-status hidden"></div>
+        </button>
+
+        <div id="subtitleBubble" class="subtitle floating hidden"></div>
+
+        <div id="consolePanel" class="console-panel hidden no-drag">
+          <div class="console-header">
+            <div>
+              <div class="console-title">Command Console</div>
+              <div class="console-copy">A smaller mission panel for quick requests.</div>
+            </div>
+          </div>
+
+          <div class="quick-actions">
+            <button id="quickSpeak" class="action-button primary">Speak Request</button>
+            <button id="quickType" class="action-button">Type Request</button>
+            <button id="quickJournal" class="action-button">View Latest Journal</button>
+            <button id="quickSettings" class="action-button">Open Settings</button>
+          </div>
+
+          <div class="status-stack">
+            <div class="status-card">
+              <div class="panel-label">Last Heard</div>
+              <div id="requestPreview" class="request-preview compact-card">Press the microphone and speak.</div>
+            </div>
+            <div class="status-card">
+              <div class="panel-label">Sent To Codex</div>
+              <div id="codexPreview" class="request-preview compact-card">Your backend-owned Codex prompt will appear here.</div>
+            </div>
+          </div>
+
+          <div class="input-stack">
+            <textarea id="typedPrompt" class="hidden" placeholder="Type a request to send to Codex."></textarea>
+            <button id="micButton" class="mic-button">Hold / Click To Speak</button>
+          </div>
+        </div>
+
+        <div id="settingsPanel" class="settings-panel hidden no-drag">
+          <div class="settings-header">
+            <div>
+              <h2>Codex Avatar Settings</h2>
+              <p class="settings-copy">This controls the backend-owned Codex path, the wake helper, and your avatar setup.</p>
+            </div>
+          </div>
+
+          <label>
+            <span>Codex Provider</span>
+            <select id="providerSelect"></select>
+          </label>
+          <label>
+            <span>Execution Mode</span>
+            <select id="executionModeSelect"></select>
+          </label>
+          <label>
+            <span>Model</span>
+            <select id="modelSelect"></select>
+          </label>
+          <label>
+            <span>Character</span>
+            <select id="characterSelect"></select>
+          </label>
+          <label>
+            <span>Voice</span>
+            <select id="voiceSelect"></select>
+          </label>
+          <label>
+            <span>Microphone</span>
+            <select id="micSelect"></select>
+          </label>
+          <label>
+            <span>Workspace Path</span>
+            <div class="path-row"><input id="workspacePath" /><button id="workspaceBrowse">Browse</button></div>
+          </label>
+          <label>
+            <span>Journal Folder</span>
+            <div class="path-row"><input id="journalPath" /><button id="journalBrowse">Browse</button></div>
+          </label>
+          <label>
+            <span>Character Folder</span>
+            <div class="path-row"><input id="characterPath" /><button id="characterBrowse">Browse</button></div>
+          </label>
+          <label>
+            <span>Codex CLI Path</span>
+            <input id="codexCliPath" />
+          </label>
+
+          <div class="settings-divider">Wake</div>
+          <label class="checkbox">
+            <input id="wakeEnabled" type="checkbox" />
+            Enable the local wake helper
+          </label>
+          <label>
+            <span>Wake Phrase</span>
+            <input id="wakePhrase" />
+          </label>
+          <label>
+            <span>Bluetooth Device Name</span>
+            <input id="wakeBluetoothDeviceName" />
+          </label>
+          <label>
+            <span>Avatar Launcher Path</span>
+            <div class="path-row"><input id="avatarExecutablePath" /><button id="avatarExecutableBrowse">Browse</button></div>
+          </label>
+
+          <div class="settings-divider">API</div>
+          <label>
+            <span>API Key (optional local override)</span>
+            <input id="apiKeyInput" type="password" placeholder="Leave blank to keep the current saved key" />
+          </label>
+          <label class="checkbox">
+            <input id="useStoredApiKey" type="checkbox" />
+            Prefer the saved local API key
+          </label>
+          <div id="secretStatus" class="secret-status"></div>
+          <label class="checkbox"><input id="subtitleToggle" type="checkbox" /> Show subtitles while speaking</label>
+          <button id="saveSettings">Save Settings</button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
