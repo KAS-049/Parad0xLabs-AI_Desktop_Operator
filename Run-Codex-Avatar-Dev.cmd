@@ -14,6 +14,9 @@ if not defined NPM_CMD (
   exit /b 1
 )
 
+for %%I in ("%NPM_CMD%") do set "NODE_BIN=%%~dpI"
+set "PATH=%NODE_BIN%;%PATH%"
+
 if not exist "%APP_DIR%node_modules\electron\dist\electron.exe" (
   echo Installing project dependencies...
   call "%NPM_CMD%" ci
