@@ -32,6 +32,17 @@ Optional but useful:
 5. Run `npm run build`.
 6. Run `npm run start`.
 
+## Quick launch on Windows
+
+- `Run-Codex-Avatar-Dev.cmd`
+  - installs dependencies if they are missing
+  - builds the app if `dist/` is missing
+  - launches Electron
+- `Run-Codex-Avatar.vbs`
+  - calls the same bootstrap launcher from a double-clickable Windows script
+
+If the launcher says Node.js is missing, install Node.js 22+ first and run it again.
+
 ## First run
 
 - Open settings inside the app.
