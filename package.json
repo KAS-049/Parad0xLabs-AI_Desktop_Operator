@@ -10,6 +10,7 @@
     "build:renderer": "vite build",
     "build:main": "tsc -p tsconfig.main.json",
     "build": "npm run build:renderer && npm run build:main",
+    "test": "npm run build:main && node --test tests/*.test.mjs",
     "start": "electron .",
     "package:win": "npm run build && electron-builder --win nsis"
   },
@@ -39,10 +40,14 @@
     "productName": "Codex Avatar",
     "files": [
       "dist/**/*",
+      "automation/**/*",
       "characters/**/*",
       "docs/**/*",
       "README.md",
       "package.json"
+    ],
+    "asarUnpack": [
+      "automation/**/*"
     ],
     "directories": {
       "buildResources": "build"

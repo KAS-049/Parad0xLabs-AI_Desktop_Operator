@@ -58,7 +58,11 @@
             </div>
             <div class="status-card">
               <div class="panel-label">Sent To Codex</div>
-              <div id="codexPreview" class="request-preview compact-card">Your backend-owned Codex prompt will appear here.</div>
+              <div id="codexPreview" class="request-preview compact-card">Your live Codex desktop submission will appear here.</div>
+            </div>
+            <div class="status-card">
+              <div class="panel-label">Execution Policy</div>
+              <div id="policyPreview" class="request-preview compact-card">Policy status will appear here.</div>
             </div>
           </div>
 
@@ -72,7 +76,7 @@
           <div class="settings-header">
             <div>
               <h2>Codex Avatar Settings</h2>
-              <p class="settings-copy">This controls the backend-owned Codex path, the wake helper, and your avatar setup.</p>
+              <p class="settings-copy">This controls the live Codex desktop companion mode, the optional debug path, the wake helper, and your avatar setup.</p>
             </div>
           </div>
 
@@ -120,7 +124,7 @@
           <div class="settings-divider">Wake</div>
           <label class="checkbox">
             <input id="wakeEnabled" type="checkbox" />
-            Enable the local wake helper
+            Enable local wake phrase while the app is open
           </label>
           <label>
             <span>Wake Phrase</span>

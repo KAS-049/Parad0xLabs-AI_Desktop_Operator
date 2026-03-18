@@ -11,6 +11,7 @@ interface LoadResult {
 }
 
 export class AvatarScene {
+  private static readonly MAX_PRESENTATION_ROTATION = Math.PI * 0.42;
   private readonly renderer: THREE.WebGLRenderer;
   private readonly scene = new THREE.Scene();
   private readonly camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
@@ -25,6 +26,7 @@ export class AvatarScene {
   private presentationRotationOffset = 0;
   private targetPresentationRotationOffset = 0;
   private pointerInside = false;
+  private compactMode = true;
 
   constructor(private readonly mount: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
@@ -125,6 +127,19 @@ export class AvatarScene {
     this.mouthOpen = Math.min(1, Math.max(0, value));
   }
 
+  setCompactMode(compact: boolean) {
+    this.compactMode = compact;
+    if (this.avatar) {
+      this.frameDisplayModel(this.avatar.scene);
+    } else if (this.fbxAvatar) {
+      this.frameDisplayModel(this.fbxAvatar);
+    } else if (this.imageAvatar) {
+      this.resetDefaultCamera();
+    } else {
+      this.resetDefaultCamera();
+    }
+  }
+
   setPresentationPointer(active: boolean) {
     if (!this.fbxAvatar) {
       this.pointerInside = false;
@@ -148,6 +163,18 @@ export class AvatarScene {
 
     this.pointerInside = true;
     this.targetPresentationRotationOffset += deltaX * 0.015;
+  }
+
+  setPresentationPointerHorizontal(normalizedX: number) {
+    if (!this.fbxAvatar) {
+      this.pointerInside = false;
+      this.targetPresentationRotationOffset = 0;
+      return;
+    }
+
+    this.pointerInside = true;
+    const clamped = THREE.MathUtils.clamp(normalizedX, -1, 1);
+    this.targetPresentationRotationOffset = clamped * AvatarScene.MAX_PRESENTATION_ROTATION;
   }
 
   getAvatarError() {
@@ -184,8 +211,7 @@ export class AvatarScene {
       const baseRotationY = (this.fbxAvatar.userData.baseRotationY as number) ?? Math.PI;
       const baseY = (this.fbxAvatar.userData.baseY as number) ?? 0;
       const baseScale = (this.fbxAvatar.userData.baseScale as number) ?? 1;
-      this.fbxAvatar.rotation.y =
-        baseRotationY + this.presentationRotationOffset + Math.sin(performance.now() / 3200) * 0.05;
+      this.fbxAvatar.rotation.y = baseRotationY + this.presentationRotationOffset + Math.sin(performance.now() / 3200) * 0.05;
       this.fbxAvatar.position.y = baseY + Math.sin(performance.now() / 1800) * 0.03;
       const speakingScale = baseScale * (1 + this.mouthOpen * 0.03);
       this.fbxAvatar.scale.setScalar(speakingScale);
@@ -301,10 +327,12 @@ export class AvatarScene {
     const fov = THREE.MathUtils.degToRad(this.camera.fov);
     const fitHeightDistance = maxDimension / (2 * Math.tan(fov / 2));
     const fitWidthDistance = fitHeightDistance / Math.max(this.camera.aspect, 0.65);
-    const distance = Math.max(fitHeightDistance, fitWidthDistance) * 1.35;
+    const modeMultiplier = this.compactMode ? 1.45 : 1.35;
+    const distance = Math.max(fitHeightDistance, fitWidthDistance) * modeMultiplier;
 
     this.controls.target.set(center.x, center.y + size.y * 0.08, center.z);
-    this.camera.position.set(center.x, center.y + size.y * 0.14, center.z + distance);
+    const compactYOffset = this.compactMode ? size.y * 0.14 : size.y * 0.14;
+    this.camera.position.set(center.x, center.y + compactYOffset, center.z + distance);
     this.camera.lookAt(this.controls.target);
   }
 

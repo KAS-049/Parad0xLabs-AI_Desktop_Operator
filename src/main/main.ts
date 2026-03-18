@@ -17,7 +17,7 @@ let backend: ChildProcess | null = null;
 let mainWindow: BrowserWindow | null = null;
 
 const WINDOW_BOUNDS = {
-  compact: { width: 280, height: 360, minWidth: 260, minHeight: 320 },
+  compact: { width: 360, height: 500, minWidth: 320, minHeight: 440 },
   expanded: { width: 410, height: 620, minWidth: 390, minHeight: 560 }
 } as const;
 
