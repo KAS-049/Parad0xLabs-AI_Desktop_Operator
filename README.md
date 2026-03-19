@@ -19,10 +19,23 @@ Codex Avatar is a Windows desktop shell for voice-first Codex work. This project
 - Node.js 22 or newer
 - npm
 
+For the primary `desktop-primary` live Codex desktop mode:
+
+- Python 3 available on `PATH`
+- Python desktop automation modules:
+  - `pywinauto`
+  - `pywin32`
+
 Optional but useful:
 
 - an OpenAI API key for live transcription, speech, image generation, and OpenAI-backed Codex flows
 - a local Codex CLI binary if you want the optional secondary/debug backend session path
+
+OpenAI key notes:
+
+- You can provide `OPENAI_API_KEY` through the environment and the backend will use it directly.
+- You can also save a local key in the app settings if you want this app to keep using the same key on this machine.
+- The current local saved-key path is file-based app state for compatibility. Treat it as local convenience storage, not as hardened secret storage.
 
 ## Easy install
 
@@ -51,13 +64,14 @@ If the launcher says Node.js is missing, install Node.js 22+ first and run it ag
 - Add or select a character from `characters/`.
 - Save an OpenAI API key in the app settings if you want live OpenAI-backed features.
 - Keep the real Codex desktop app open and visible when using the primary mode.
+- If the app reports that Python or desktop automation modules are missing, install Python 3 plus `pywinauto` and `pywin32` before using the live desktop companion mode.
 - If you want the optional secondary/debug backend session path, confirm the Codex CLI path is valid.
 
 ## Common commands
 
 - `npm ci` install pinned dependencies
 - `npm run build` build renderer and main process output
-- `npm test` run the execution policy tests
+- `npm test` run the current automated test suite
 - `npm run start` launch the Electron app from the built output
 - `npm run package:win` create a Windows package with Electron Builder
 
@@ -76,6 +90,8 @@ Local app state and secrets are not meant to be committed. Repo ignores are set 
 - `downloads/`
 - `.codex-avatar-data/`
 - `.env`
+
+If you save an API key inside the app, it is currently stored in local app state on the machine for backward compatibility. This repo does not claim that local file-based key storage is hardened secret storage.
 
 ## Security Execution Policy
 

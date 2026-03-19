@@ -179,8 +179,24 @@ function getDefaultFbxDisplaySettings(): CharacterOption["displaySettings"] {
   };
 }
 
+function sendToParent(message: BackendReplyMessage | { event: BackendEvent }) {
+  if (!process.send || !process.connected) {
+    return;
+  }
+
+  try {
+    process.send(message);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("ERR_IPC_CHANNEL_CLOSED") || message.includes("Channel closed")) {
+      return;
+    }
+    throw error;
+  }
+}
+
 function emit(event: BackendEvent) {
-  process.send?.({ event });
+  sendToParent({ event });
 }
 
 function emitRunProgress(runId: string, state: RunProgressEvent["state"], stage: RunStage, message: string, extras?: Partial<RunProgressEvent>) {
@@ -461,17 +477,17 @@ async function getResolvedApiKey(settings: AppSettings): Promise<string | null> 
   const secrets = await getSecrets();
 
   if (settings.useStoredApiKey && secrets.openAiApiKey) {
-    await appendDiagnosticLog(`api-key-source=stored suffix=${secrets.openAiApiKey.slice(-4)} useStored=${settings.useStoredApiKey}`);
+    await appendDiagnosticLog(`api-key-source=stored useStored=${settings.useStoredApiKey}`);
     return secrets.openAiApiKey;
   }
 
   if (process.env.OPENAI_API_KEY) {
-    await appendDiagnosticLog(`api-key-source=env suffix=${process.env.OPENAI_API_KEY.slice(-4)} useStored=${settings.useStoredApiKey}`);
+    await appendDiagnosticLog(`api-key-source=env useStored=${settings.useStoredApiKey}`);
     return process.env.OPENAI_API_KEY;
   }
 
   if (secrets.openAiApiKey) {
-    await appendDiagnosticLog(`api-key-source=stored-fallback suffix=${secrets.openAiApiKey.slice(-4)} useStored=${settings.useStoredApiKey}`);
+    await appendDiagnosticLog(`api-key-source=stored-fallback useStored=${settings.useStoredApiKey}`);
     return secrets.openAiApiKey;
   }
 
@@ -617,8 +633,18 @@ async function transcribeAudio(payload: StartRunPayload, settings: AppSettings, 
 
   const bytes = Buffer.from(payload.audioBase64, "base64");
   const form = new FormData();
+  const audioExtension =
+    payload.mimeType === "audio/wav"
+      ? "wav"
+      : payload.mimeType === "audio/webm"
+        ? "webm"
+        : payload.mimeType === "audio/mp3" || payload.mimeType === "audio/mpeg"
+          ? "mp3"
+          : payload.mimeType === "audio/mp4" || payload.mimeType === "audio/m4a" || payload.mimeType === "audio/x-m4a"
+            ? "m4a"
+            : "bin";
   form.append("model", "gpt-4o-mini-transcribe");
-  form.append("file", new Blob([bytes], { type: payload.mimeType }), "mic.webm");
+  form.append("file", new Blob([bytes], { type: payload.mimeType }), `mic.${audioExtension}`);
 
   const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
     method: "POST",
@@ -838,12 +864,20 @@ function createPrimaryDesktopAdapter(): CodexProviderAdapter {
       context.submitPrompt("Running preflight checks against the visible Codex desktop window...");
       await context.log(`submit-pipeline desktop-submit-adapter-invoked runId=${context.runId} promptChars=${submittedPrompt.length}`);
       await context.log("desktop-automation preflight-start");
-      const automation = await runDesktopCodexAutomation(DESKTOP_HELPER_PATH, submittedPrompt, context.settings.workspacePath);
+      let automation;
+      try {
+        automation = await runDesktopCodexAutomation(DESKTOP_HELPER_PATH, submittedPrompt, context.settings.workspacePath);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        await context.log(`desktop-automation preflight-failed ${message}`);
+        context.submitPrompt(message);
+        throw error;
+      }
       for (const line of automation.report.debugLog ?? []) {
         await context.log(`submit-pipeline ${line}`);
       }
       await context.log("desktop-automation submit-complete");
-      await context.log("desktop-automation capture-complete");
+      await context.log(automation.report.partialCapture ? "desktop-automation capture-partial" : "desktop-automation capture-full");
       await context.log(
         `desktop-automation window=${automation.report.windowTitle ?? "unknown"} confidence=${automation.report.confidence} clipboard=${automation.report.usedClipboard} coordinateFallback=${automation.report.usedCoordinateFallback} partialCapture=${automation.report.partialCapture} checks=${automation.report.checks.map((check) => `${check.name}:${check.passed}`).join(",")}`
       );
@@ -960,7 +994,8 @@ async function summarizeRun(
   userRequest: string,
   rawCodexOutput: string,
   settings: AppSettings,
-  providerKind: CodexAdapterKind
+  providerKind: CodexAdapterKind,
+  partialCapture = false
 ): Promise<EngineeringSummary> {
   if (providerKind === "mock") {
     return {
@@ -988,23 +1023,34 @@ async function summarizeRun(
   if (providerKind === "desktop-codex-primary") {
     const normalizedOutput = normalizeCapturedCodexText(rawCodexOutput);
     const fallback = buildFallbackSummary(userRequest, normalizedOutput);
+    const plainEnglishSummary = partialCapture
+      ? `Partial Codex capture: ${normalizedOutput || fallback.plainEnglishSummary}`
+      : normalizedOutput || fallback.plainEnglishSummary;
     return {
-      plainEnglishSummary: normalizedOutput || fallback.plainEnglishSummary,
+      plainEnglishSummary,
       technicalSummary: toSingleLine(normalizedOutput, fallback.technicalSummary),
       whatCodexDid: toSingleLine(normalizedOutput, fallback.whatCodexDid),
-      problemOccurred: "No explicit problem was recorded beyond anything described in the captured Codex reply.",
-      howItWasFixed: "No separate fix note was extracted beyond the live Codex response.",
-      blockers: "No blocker was detected in the live Codex desktop capture path.",
-      rememberNextTime: "This run depended on the visible Codex desktop window, so keep that window stable and focused while the avatar works.",
-      nextSteps: "Ask the next request when you are ready.",
+      problemOccurred: partialCapture
+        ? "The live Codex desktop reply was only partially captured before the helper could verify a fully stable result."
+        : "No explicit problem was recorded beyond anything described in the captured Codex reply.",
+      howItWasFixed: partialCapture
+        ? "The app preserved the partial reply instead of discarding it, so the current result could still be spoken and logged."
+        : "No separate fix note was extracted beyond the live Codex response.",
+      blockers: partialCapture
+        ? "The live Codex desktop capture path returned only a partial result."
+        : "No blocker was detected in the live Codex desktop capture path.",
+      rememberNextTime: partialCapture
+        ? "If the desktop capture is partial, keep the visible Codex window stable long enough for the helper to confirm the final reply."
+        : "This run depended on the visible Codex desktop window, so keep that window stable and focused while the avatar works.",
+      nextSteps: partialCapture ? "Review the partial reply in Codex and ask again if you need the missing detail." : "Ask the next request when you are ready.",
       filesChanged: extractFilesChanged(normalizedOutput),
       commandsRun: extractCommandsRun(normalizedOutput),
       fixDiagramSpec: buildEngineeringDiagramSpec(
         userRequest,
         normalizedOutput || fallback.whatCodexDid,
-        "No explicit problem extracted from the live desktop capture.",
-        "No separate fix note extracted from the live desktop capture.",
-        "Ask the next request when you are ready."
+        partialCapture ? "The live desktop capture was partial." : "No explicit problem extracted from the live desktop capture.",
+        partialCapture ? "The app preserved the partial reply for speech and logging." : "No separate fix note extracted from the live desktop capture.",
+        partialCapture ? "Review the partial reply in Codex and ask again if needed." : "Ask the next request when you are ready."
       ),
       fixDiagramSource: "mermaid"
     };
@@ -1221,7 +1267,13 @@ async function startRun(payload: StartRunPayload): Promise<RunCompletion> {
   });
   const normalizedResult = normalizeProviderResult(
     providerResult,
-    await summarizeRun(transcript, providerResult.rawCodexOutput, settings, providerResult.providerKind)
+    await summarizeRun(
+      transcript,
+      providerResult.rawCodexOutput,
+      settings,
+      providerResult.providerKind,
+      Boolean(providerResult.desktopAutomationReport?.partialCapture)
+    )
   );
 
   const baseReport: Omit<RunReport, "timestamp"> = {
@@ -1260,7 +1312,12 @@ async function startRun(payload: StartRunPayload): Promise<RunCompletion> {
     spokenSummary: buildSpokenSummary(baseReport)
   };
 
-  emitRunProgress(runId, "thinking", "speaking", "Turning the finished Codex reply into voice...");
+  emitRunProgress(
+    runId,
+    "thinking",
+    "speaking",
+    report.status === "partial" ? "Turning the partially captured Codex reply into voice..." : "Turning the finished Codex reply into voice..."
+  );
   const speechBytes = await synthesizeSpeech(report.spokenSummary, settings.selectedVoice, settings);
 
   emitRunProgress(runId, "thinking", "journaling", "Saving the engineering log in the background...");
@@ -1306,12 +1363,12 @@ process.on("message", async (message: BackendCallMessage) => {
       throw new Error(`Unsupported method: ${message.method}`);
     }
 
-    process.send?.({ id: message.id, ok: true, result } satisfies BackendReplyMessage);
+    sendToParent({ id: message.id, ok: true, result } satisfies BackendReplyMessage);
   } catch (error) {
     const text = error instanceof Error ? error.message : "Unknown backend failure.";
     await appendDiagnosticLog(`backend-request-error ${text}`);
     emit({ kind: "wake-status", state: "error", message: text });
-    process.send?.({ id: message.id, ok: false, error: text } satisfies BackendReplyMessage);
+    sendToParent({ id: message.id, ok: false, error: text } satisfies BackendReplyMessage);
   }
 });
 

@@ -450,6 +450,7 @@ def main() -> int:
 
         reply_text, partial_capture = wait_for_codex_reply(window, prompt, expected_handle)
         debug_log.append(f"capture-complete partial={partial_capture} reply_chars={len(reply_text)}")
+        debug_log.append("capture-partial" if partial_capture else "capture-full")
         result = AutomationResult(
             submitted=prompt,
             reply=reply_text,
@@ -459,11 +460,13 @@ def main() -> int:
             usedCoordinateFallback=used_coordinate_fallback,
             partialCapture=partial_capture,
             checks=checks,
-            abortReason=None if not partial_capture else "Partial capture: the Codex response was captured before the helper could verify a fully stable result.",
+            abortReason=None,
             debugLog=debug_log
         )
-        return emit_result(result, 0 if not partial_capture else 1)
+        return emit_result(result, 0)
     except Exception as error:
+        if "capture" in str(error).lower():
+            debug_log.append(f"capture-failed reason={str(error)}")
         debug_log.append(f"submit-aborted reason={str(error)}")
         result = build_failure(
             prompt,

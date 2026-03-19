@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { access } from "node:fs/promises";
 import { z } from "zod";
 import type { DesktopAutomationReport } from "../shared/contracts";
 
@@ -29,6 +30,15 @@ const automationResultSchema = z.object({
   debugLog: z.array(z.string()).optional().default([])
 });
 
+const pythonPreflightSchema = z.object({
+  status: z.enum(["ok", "missing-modules", "module-error"]),
+  missing: z.array(z.string()).optional().default([]),
+  module: z.string().optional(),
+  error: z.string().optional()
+});
+
+const requiredPythonModules = ["pywinauto", "win32clipboard", "win32gui"] as const;
+
 export interface DesktopAutomationResult {
   submitted: string;
   reply: string;
@@ -40,6 +50,7 @@ export async function runDesktopCodexAutomation(
   prompt: string,
   cwd: string
 ): Promise<DesktopAutomationResult> {
+  await verifyDesktopAutomationPreflight(helperPath, cwd);
   const stdout = await runJsonProcess("python", [helperPath, prompt], cwd);
   const parsed = automationResultSchema.parse(JSON.parse(stdout));
   const report: DesktopAutomationReport = {
@@ -63,6 +74,84 @@ export async function runDesktopCodexAutomation(
   };
 }
 
+async function verifyDesktopAutomationPreflight(helperPath: string, cwd: string) {
+  try {
+    await access(helperPath);
+  } catch {
+    throw new Error("Desktop submit blocked: the desktop automation helper script is missing.");
+  }
+
+  const preflightScript = [
+    "import importlib, json, sys",
+    `modules = ${JSON.stringify([...requiredPythonModules])}`,
+    "missing = []",
+    "for name in modules:",
+    "    try:",
+    "        importlib.import_module(name)",
+    "    except ModuleNotFoundError:",
+    "        missing.append(name)",
+    "    except Exception as error:",
+    "        print(json.dumps({'status': 'module-error', 'module': name, 'error': str(error)}))",
+    "        sys.exit(4)",
+    "if missing:",
+    "    print(json.dumps({'status': 'missing-modules', 'missing': missing}))",
+    "    sys.exit(3)",
+    "print(json.dumps({'status': 'ok'}))"
+  ].join("\n");
+
+  const preflightResult = await runPythonPreflight(preflightScript, cwd);
+  const parsed = preflightResult.payload;
+
+  if (parsed.status === "missing-modules") {
+    throw new Error(
+      `Desktop submit blocked: Python is installed, but required desktop automation modules are missing: ${parsed.missing.join(", ")}. Install pywinauto and pywin32.`
+    );
+  }
+
+  if (parsed.status === "module-error") {
+    throw new Error(
+      `Desktop submit blocked: the Python desktop automation module ${parsed.module ?? "unknown"} failed to load. ${parsed.error ?? "Unknown module error."}`
+    );
+  }
+}
+
+async function runPythonPreflight(script: string, cwd: string) {
+  return new Promise<{ exitCode: number; payload: z.infer<typeof pythonPreflightSchema> }>((resolve, reject) => {
+    const child = spawn("python", ["-c", script], { cwd, shell: false });
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk.toString();
+    });
+    child.on("error", (error) => {
+      const text =
+        "code" in (error as NodeJS.ErrnoException) && (error as NodeJS.ErrnoException).code === "ENOENT"
+          ? "Desktop submit blocked: Python was not found. Install Python 3 and the desktop automation dependencies to use the live Codex desktop mode."
+          : `Desktop submit blocked: the Python desktop automation preflight could not be launched. ${error instanceof Error ? error.message : String(error)}`;
+      reject(new Error(text));
+    });
+    child.on("close", (code) => {
+      const text = stdout.trim() || stderr.trim();
+      try {
+        const payload = pythonPreflightSchema.parse(JSON.parse(text));
+        resolve({ exitCode: code ?? 0, payload });
+      } catch {
+        reject(
+          new Error(
+            text
+              ? `Desktop submit blocked: the Python desktop automation preflight failed. ${text}`
+              : "Desktop submit blocked: the Python desktop automation preflight returned an invalid response."
+          )
+        );
+      }
+    });
+  });
+}
+
 export function assertDesktopAutomationResult(report: DesktopAutomationReport) {
   const failedChecks = report.checks.filter((check) => !check.passed);
   if (report.abortReason) {
@@ -79,6 +168,10 @@ export function assertDesktopAutomationResult(report: DesktopAutomationReport) {
 }
 
 function runJsonProcess(command: string, args: string[], cwd: string) {
+  return runProcess(command, args, cwd);
+}
+
+function runProcess(command: string, args: string[], cwd: string) {
   return new Promise<string>((resolve, reject) => {
     const child = spawn(command, args, { cwd, shell: false });
     let stdout = "";
@@ -89,7 +182,13 @@ function runJsonProcess(command: string, args: string[], cwd: string) {
     child.stderr.on("data", (chunk) => {
       stderr += chunk.toString();
     });
-    child.on("error", reject);
+    child.on("error", (error) => {
+      const text =
+        "code" in (error as NodeJS.ErrnoException) && (error as NodeJS.ErrnoException).code === "ENOENT"
+          ? "Desktop submit blocked: Python was not found. Install Python 3 and the desktop automation dependencies to use the live Codex desktop mode."
+          : `Desktop submit blocked: the desktop automation helper could not be launched. ${error instanceof Error ? error.message : String(error)}`;
+      reject(new Error(text));
+    });
     child.on("close", (code) => {
       if (code === 0) {
         resolve(stdout.trim());

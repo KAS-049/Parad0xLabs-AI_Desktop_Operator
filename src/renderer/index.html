@@ -3,80 +3,163 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Codex Avatar</title>
+    <title>NULLA Hub</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <div id="app">
-      <div id="shell" class="shell compact">
-        <div class="chrome-overlay">
-          <div class="topbar drag-handle">
-            <div class="toolbar-left">
-              <button id="settingsToggle" class="icon-button no-drag" title="Settings">+</button>
-              <div class="toolbar-title">Codex Avatar</div>
-            </div>
-            <div class="toolbar-right">
-              <button id="collapseButton" class="window-button no-drag hidden" title="Collapse">-</button>
-              <button id="minimizeButton" class="window-button no-drag" title="Minimize">_</button>
-              <button id="closeButton" class="window-button close no-drag" title="Close">X</button>
+      <div id="shell" class="shell mode-companion compact">
+        <div class="frame-system" aria-hidden="true">
+          <div class="frame-corner corner-tl"></div>
+          <div class="frame-corner corner-tr"></div>
+          <div class="frame-corner corner-bl"></div>
+          <div class="frame-corner corner-br"></div>
+          <div class="frame-rail rail-top"></div>
+          <div class="frame-rail rail-bottom"></div>
+          <div class="frame-rail rail-left"></div>
+          <div class="frame-rail rail-right"></div>
+          <div class="frame-inset"></div>
+          <div class="frame-viewport"></div>
+        </div>
+        <div class="shell-glow"></div>
+
+        <div class="topbar drag-handle">
+          <div class="toolbar-left">
+            <button id="settingsToggle" class="icon-button no-drag" title="Settings">+</button>
+            <div class="brand-lockup">
+              <div id="brandEyebrow" class="brand-eyebrow">Parad0xLabs gateway</div>
+              <div id="brandTitle" class="brand-title">NULLA Hub</div>
             </div>
           </div>
-          <div id="stateBadge" class="state idle no-drag">Idle</div>
+
+          <div id="navStrip" class="nav-strip no-drag"></div>
+
+          <div class="toolbar-right">
+            <div class="toolbar-search no-drag">
+              <input id="hubSearchInput" class="hub-search-input no-drag" type="search" placeholder="Search NULLA Hub" autocomplete="off" />
+              <div id="hubSearchResults" class="hub-search-results hidden no-drag"></div>
+            </div>
+            <div id="shellModeBadge" class="mode-pill no-drag">Companion</div>
+            <div id="stateBadge" class="state idle no-drag">Idle</div>
+            <button id="collapseButton" class="window-button no-drag hidden" title="Return to Companion">-</button>
+            <button id="minimizeButton" class="window-button no-drag" title="Minimize">_</button>
+            <button id="closeButton" class="window-button close no-drag" title="Close">X</button>
+          </div>
         </div>
 
-        <button id="avatarStage" class="avatar-stage no-drag" title="Open Console">
-          <div id="avatarMount" class="avatar-mount"></div>
-          <div class="avatar-glow"></div>
-          <div class="avatar-hint">
-            <div class="avatar-name">Codex Avatar</div>
-            <div class="avatar-prompt">Click to open command console</div>
-          </div>
-          <div id="avatarStatus" class="avatar-status hidden"></div>
-        </button>
+        <div id="trustStrip" class="trust-strip no-drag"></div>
 
-        <div id="subtitleBubble" class="subtitle floating hidden"></div>
+        <div class="shell-body">
+          <aside class="avatar-column">
+            <button id="avatarStage" class="avatar-stage no-drag" title="Open NULLA Hub">
+              <div id="avatarMount" class="avatar-mount"></div>
+              <div class="avatar-glow"></div>
+              <div class="avatar-aura"></div>
+              <div class="avatar-hint">
+                <div class="avatar-name">NULLA Hub</div>
+                <div class="avatar-prompt">Click to expand the hub</div>
+              </div>
+              <div id="avatarStatus" class="avatar-status hidden"></div>
+            </button>
 
-        <div id="consolePanel" class="console-panel hidden no-drag">
-          <div class="console-header">
-            <div>
-              <div class="console-title">Command Console</div>
-              <div class="console-copy">A smaller mission panel for quick requests.</div>
+            <div class="avatar-copy">
+              <div class="avatar-label">Guide layer</div>
+              <div id="avatarMessage" class="avatar-message">
+                The avatar stays present as a guide, wake layer, and quick-entry point while the hub expands when you need more.
+              </div>
             </div>
-          </div>
 
-          <div class="quick-actions">
-            <button id="quickSpeak" class="action-button primary">Speak Request</button>
-            <button id="quickType" class="action-button">Type Request</button>
-            <button id="quickJournal" class="action-button">View Latest Journal</button>
-            <button id="quickSettings" class="action-button">Open Settings</button>
-          </div>
+            <div id="subtitleBubble" class="subtitle hidden"></div>
+          </aside>
 
-          <div class="status-stack">
-            <div class="status-card">
-              <div class="panel-label">Last Heard</div>
-              <div id="requestPreview" class="request-preview compact-card">Press the microphone and speak.</div>
-            </div>
-            <div class="status-card">
-              <div class="panel-label">Sent To Codex</div>
-              <div id="codexPreview" class="request-preview compact-card">Your live Codex desktop submission will appear here.</div>
-            </div>
-            <div class="status-card">
-              <div class="panel-label">Execution Policy</div>
-              <div id="policyPreview" class="request-preview compact-card">Policy status will appear here.</div>
-            </div>
-          </div>
+          <main class="surface-stack no-drag">
+            <section id="companionSurface" class="surface companion-surface">
+              <div class="surface-eyebrow">Companion Mode</div>
+              <h1 id="companionTitle">Open the live operator, then learn, browse, or connect safely.</h1>
+              <p id="companionCopy" class="surface-copy">
+                What this is: NULLA Hub is the desktop gateway into the NULLA and Parad0xLabs ecosystem. What you can do right now: NULLA Operator is the live guided workflow for sending real work through the current desktop Codex path. How trust and status work: Only verified destinations are actionable. Everything else is read only, planned, or waiting for verification.
+              </p>
+              <div class="hero-actions">
+                <button id="expandHubButton" class="primary-button">Open Hub</button>
+                <button id="quickOperatorButton" class="secondary-button">Use NULLA Operator</button>
+              </div>
+            </section>
 
-          <div class="input-stack">
-            <textarea id="typedPrompt" class="hidden" placeholder="Type a request to send to Codex."></textarea>
-            <button id="micButton" class="mic-button">Hold / Click To Speak</button>
-          </div>
+            <section id="hubSurface" class="surface hub-surface">
+              <div class="surface-eyebrow">Hub Mode</div>
+              <div id="hubHomeHero" class="hub-home-hero"></div>
+              <div id="moduleGrid" class="module-grid"></div>
+            </section>
+
+            <section id="actionSurface" class="surface action-surface">
+              <div class="action-header">
+                <button id="backToHubButton" class="secondary-button">Back to Hub</button>
+                <div class="action-heading">
+                  <div id="actionModuleEyebrow" class="surface-eyebrow">Action Mode</div>
+                  <h2 id="actionModuleTitle">NULLA Operator</h2>
+                  <p id="actionModuleSubtitle" class="surface-copy"></p>
+                </div>
+              </div>
+
+              <div id="actionStoryCard" class="story-card"></div>
+
+              <div id="operatorWorkspace" class="workflow-surface hidden">
+                <div class="workflow-grid two">
+                  <div class="panel-card">
+                    <div class="panel-label">Operator</div>
+                    <textarea id="typedPrompt" placeholder="Describe the work you want NULLA Operator to do."></textarea>
+                    <div class="button-row">
+                      <button id="submitPromptButton" class="secondary-button">Send Typed Request</button>
+                      <button id="micButton" class="primary-button">Hold / Click To Speak</button>
+                      <button id="openLatestJournalButton" class="secondary-button">Open Latest Journal</button>
+                    </div>
+                  </div>
+
+                  <div class="panel-card">
+                    <div class="panel-label">Last Heard</div>
+                    <div id="requestPreview" class="panel-copy muted">Press the microphone and speak.</div>
+                    <div class="panel-label top-gap">Sent To Codex</div>
+                    <div id="codexPreview" class="panel-copy muted">Your live Codex desktop submission will appear here.</div>
+                  </div>
+                </div>
+
+                <div class="workflow-grid two">
+                  <div class="panel-card">
+                    <div class="panel-label">Execution Policy</div>
+                    <div id="policyPreview" class="panel-copy muted">Policy status will appear here.</div>
+                  </div>
+
+                  <div class="panel-card">
+                    <div class="panel-label">Latest Summary</div>
+                    <div id="operatorSummary" class="panel-copy muted">The flagship workflow has not run yet in this session.</div>
+                    <div class="panel-label top-gap">Technical Notes</div>
+                    <div id="operatorTechnical" class="panel-copy muted">Technical details will appear here after a run.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="infoWorkspace" class="workflow-surface hidden">
+                <div id="infoModuleBody" class="panel-card panel-copy"></div>
+              </div>
+
+              <div id="settingsWorkspace" class="workflow-surface hidden">
+                <div class="panel-card">
+                  <div class="panel-label">System Status</div>
+                  <div id="settingsModuleCopy" class="panel-copy muted">
+                    Review runtime readiness, provider selection, wake controls, and local trust surfaces before running workflows.
+                  </div>
+                  <button id="openSettingsPanelButton" class="primary-button">Open System Controls</button>
+                </div>
+              </div>
+            </section>
+          </main>
         </div>
 
         <div id="settingsPanel" class="settings-panel hidden no-drag">
           <div class="settings-header">
             <div>
-              <h2>Codex Avatar Settings</h2>
-              <p class="settings-copy">This controls the live Codex desktop companion mode, the optional debug path, the wake helper, and your avatar setup.</p>
+              <h2>NULLA Hub Settings</h2>
+              <p class="settings-copy">This controls the live desktop companion path, the optional debug path, wake behavior, and your local runtime setup.</p>
             </div>
           </div>
 
@@ -150,7 +233,7 @@
           </label>
           <div id="secretStatus" class="secret-status"></div>
           <label class="checkbox"><input id="subtitleToggle" type="checkbox" /> Show subtitles while speaking</label>
-          <button id="saveSettings">Save Settings</button>
+          <button id="saveSettings" class="primary-button">Save Settings</button>
         </div>
       </div>
     </div>

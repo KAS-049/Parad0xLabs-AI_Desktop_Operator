@@ -7,10 +7,29 @@ export type AvatarState =
   | "thinking"
   | "speaking"
   | "error";
+export type ShellMode = "companion" | "hub" | "action";
+export type HubTab = "hub" | "use-ai" | "learn" | "explore" | "community" | "settings";
 export type CodexProvider = "desktop-codex" | "mock" | "openai-codex" | "codex-cli";
 export type CodexExecutionMode = "desktop-primary" | "direct-backend-debug";
 export type CharacterKind = "vrm" | "image" | "fbx";
 export type CodexAdapterKind = "mock" | "desktop-codex-primary" | "direct-backend-debug";
+export type ModuleCategory = "operator" | "learn" | "community" | "integrations" | "ecosystem" | "settings" | "system";
+export type ModuleActionType = "informational" | "navigation" | "external-link" | "workflow" | "privileged-action" | "placeholder";
+export type RiskLevel = "low" | "medium" | "high" | "restricted";
+export type ModuleStatus = "ready" | "beta" | "disabled" | "coming-soon" | "restricted";
+export type CapabilityKey =
+  | "open_external_url"
+  | "read_local_settings"
+  | "write_local_settings"
+  | "voice_capture"
+  | "voice_playback"
+  | "desktop_codex_submit"
+  | "desktop_codex_capture"
+  | "local_process_exec"
+  | "workspace_read"
+  | "workspace_write"
+  | "journal_write"
+  | "future_openclaw_bridge";
 export type ExecutionRiskLevel = "read-only" | "reversible-write" | "privileged-destructive";
 export type ExecutionActionKind = "codex-cli-session" | "desktop-submit" | "remote-codex-session";
 export type ExecutionPolicyStatus = "safe-to-run" | "requires-approval" | "blocked-by-policy";
@@ -163,6 +182,31 @@ export interface BootstrapData {
   models: ModelOption[];
   secretStatus: SecretStatus;
   latestJournalBookPath: string | null;
+}
+
+export interface HubModule {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  icon: string;
+  category: ModuleCategory;
+  route: string;
+  actionType: ModuleActionType;
+  riskLevel: RiskLevel;
+  enabled: boolean;
+  internal: boolean;
+  requiresBackend: boolean;
+  requiresLocalRuntime: boolean;
+  status: ModuleStatus;
+  capabilities: CapabilityKey[];
+  featureFlag?: string;
+  externalUrl?: string;
+  moduleAdapterId?: string;
+  badge?: string;
+  sortOrder?: number;
+  resourceIds?: string[];
+  visibilityRules?: string[];
 }
 
 export interface RunReport {
